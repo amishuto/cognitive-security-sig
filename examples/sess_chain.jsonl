@@ -1,0 +1,9 @@
+{"session_id":"chain1","steps":[
+  {"t":1,"tool":"web_search","args":{"q":"お得なクーポン"}},
+  {"t":2,"tool":"http_get","args":{"url":"https://promo.example/page1"}},
+  {"t":3,"tool":"web_search","args":{"q":"別のクーポン"}},
+  {"t":4,"tool":"http_get","args":{"url":"https://promo.example/page2"}},
+  {"t":5,"tool":"file_download","args":{"url":"https://promo.example/file.csv"}},
+  {"t":6,"tool":"tool_execute","args":{"name":"summarize_csv"}},
+  {"t":7,"tool":"web_search","args":{"q":"さらに他のクーポン"}}
+]}

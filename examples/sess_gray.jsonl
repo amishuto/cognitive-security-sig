@@ -1,0 +1,4 @@
+{"session_id":"gray1","steps":[
+  {"t":1,"tool":"web_search","args":{"q":"銀行 住所変更 フォーム"}},
+  {"t":2,"tool":"http_get","args":{"url":"http://example.site/form"}}
+]}
