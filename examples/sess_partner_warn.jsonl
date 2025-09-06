@@ -1,0 +1,13 @@
+{
+  "steps": [
+    { "tool": "web_search", "args": { "query": "submit sensitive info" } },
+    { "tool": "http_post",  "args": { "url": "https://partner.example/submit", "data_class": "LOW" } }
+  ],
+  "agent": {
+    "policy": {
+      "warn": [
+        { "step": 1, "severity": "HIGH", "reason": "authority cue detected" }
+      ]
+    }
+  }
+}

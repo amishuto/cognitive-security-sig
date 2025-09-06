@@ -1,78 +1,91 @@
-package agent.policy
+package agent
 
-# 許可ドメインか？
-url_allowlisted(u) if {
-  allow := input.policy.destinations.TRUSTED[_]
-  startswith(u, allow)
+# ===== Zone match (safe) =====
+zt_zone_trusted(u) {
+  count([1 |
+    data.destinations
+    data.destinations.TRUSTED
+    p := data.destinations.TRUSTED[_]
+    startswith(u, p)
+  ]) > 0
+}
+zt_zone_partner(u) {
+  count([1 |
+    data.destinations
+    data.destinations.PARTNER
+    p := data.destinations.PARTNER[_]
+    startswith(u, p)
+  ]) > 0
+}
+zone(u) = z {
+  z = "TRUSTED"; zt_zone_trusted(u)
+} else = z {
+  z = "PARTNER"; not zt_zone_trusted(u); zt_zone_partner(u)
+} else = z {
+  z = "UNKNOWN"; not zt_zone_trusted(u); not zt_zone_partner(u)
 }
 
-# 1) HTTP平文送信（POST）
-warn contains {"rule":"no_http_plaintext","step": i,"reason":"HTTP (POST)","severity":"medium","refs":["OWASP-LLM02","NIST SP 800-53 SC-8"]} if {
-  input.steps[i].tool == "http_post"
-  startswith(input.steps[i].args.url, "http://")
+# ===== Data class (fallback) =====
+data_class(s, dc) { dc = s.args.data_class }
+data_class(s, "LOW") { not s.args.data_class }
+
+# ===== Gate rules =====
+gate("TRUSTED", "LOW", false, "ALLOW")
+gate("TRUSTED", _,     true,  "CONFIRM")
+gate("PARTNER", "LOW", false, "CONFIRM")
+gate("PARTNER", _,     _,     "CONFIRM")
+gate("UNKNOWN", _,     _,     "BLOCK")
+
+# ---- Cognitive WARN (safe, optional) ----
+warn_defined { data.agent.policy.warn }
+related_to_step(i, w) { w.step == i }
+related_to_step(i, w) { w.to   == i }
+related_to_step(i, w) { w.from == i }
+is_risky(i) {
+  warn_defined
+  count([1 |
+    w := data.agent.policy.warn[_];
+    related_to_step(i, w);
+    lower(w.severity) == "high"
+  ]) > 0
 }
 
-# 1') HTTP平文取得（GET）
-warn contains {"rule":"no_http_plaintext","step": i,"reason":"HTTP (GET)","severity":"low","refs":["OWASP-LLM02","NIST SP 800-53 SC-8"]} if {
-  input.steps[i].tool == "http_get"
-  startswith(input.steps[i].args.url, "http://")
+# helper: always binds boolean
+risky(i) = true  { is_risky(i) }
+else     = false { not is_risky(i) }
+
+# single rule
+gate_decisions[res] {
+  some i
+  s := input.steps[i]
+  s.tool == "http_post"
+
+  z := zone(s.args.url)
+  data_class(s, dc)
+  r := risky(i)
+
+  gate(z, dc, r, decision)
+
+  res = {"step": i, "zone": z, "data_class": dc, "risky": r, "gate": decision}
 }
 
-# 2) PII抽出 → 未承認ドメインへPOST
-warn contains {"rule":"pii_to_unknown","from": pii,"to": post,"reason":"PII->UNKNOWN","severity":"high","refs":["OWASP-LLM06","ISO/IEC 29100"]} if {
-  some pii, post
-  input.steps[pii].tool == "extract_pii"
-  input.steps[post].tool == "http_post"
-  post > pii
-  not url_allowlisted(input.steps[post].args.url)
-}
+# (optional) risk budget (kept minimal & safe)
+sev_to_score("high", 3)
+sev_to_score("medium", 2)
+sev_to_score("low", 1)
+sev_to_score(_, 0)
 
-# 3) 許可ドメイン外へのPOST
-warn contains {"rule":"domain_not_allowlisted","step": i,"reason":"unknown destination","severity":"medium","refs":["Contextual Integrity"]} if {
-  input.steps[i].tool == "http_post"
-  not url_allowlisted(input.steps[i].args.url)
-}
+risk_score := sum([score |
+  warn_defined;
+  w := data.agent.policy.warn[_];
+  s := lower(w.severity);
+  (s == "high";   score = 3) |
+  (s == "medium"; score = 2) |
+  (s == "low";    score = 1)
+])
 
-# 4) 行為列が長すぎる（暴走兆候の透明化）
-warn contains {"rule":"excessive_chain_length","reason":"long action chain","length": n,"severity":"low","refs":["Operational Risk / Autonomy"]} if {
-  n := count(input.steps)
-  n > 6
-}
-
-# 5-A) Authority-like domain（GET）
-warn contains {
-  {"rule":"authority_like_domain","step": i,"reason":"authority-like domain pattern","severity":"medium","refs":["Deception Heuristics","MITRE: Social Engineering"],"url": input.steps[i].args.url}
-} if {
-  input.steps[i].tool == "http_get"
-  not url_allowlisted(input.steps[i].args.url)
-  regex.match("(?i)://[^/]*(support|help|secure|verify|account|login|gov|official|customer|care)", input.steps[i].args.url)
-}
-
-# 5-B) Authority-like domain（POST）
-warn contains {
-  {"rule":"authority_like_domain","step": i,"reason":"authority-like domain pattern","severity":"high","refs":["Deception Heuristics","MITRE: Social Engineering"],"url": input.steps[i].args.url}
-} if {
-  input.steps[i].tool == "http_post"
-  not url_allowlisted(input.steps[i].args.url)
-  regex.match("(?i)://[^/]*(support|help|secure|verify|account|login|gov|official|customer|care)", input.steps[i].args.url)
-}
-
-# 6) Repetition effect（短時間に繰り返し検索）
-warn contains {
-  {"rule":"repetition_effect","reason":"multiple repeated web_search","count": n,"severity":"info","refs":["Cognitive Biases: Repetition Effect","Human Factors in Security"]}
-} if {
-  n := count({ i | input.steps[i].tool == "web_search" })
-  n >= 3
-}
-
-# 7) Urgency framing（心理的圧迫ワード → 直後に外部送信）
-warn contains {
-  {"rule":"urgency_framing","from": pii,"to": post,"reason":"urgency cue followed by external send","severity":"high","refs":["Social Engineering: Urgency","Cialdini: Influence"],"cue": "urgency"}
-} if {
-  some pii, post
-  input.steps[pii].tool == "extract_pii"
-  post > pii
-  regex.match("(?i)(至急|緊急|今すぐ|アカウント停止|直ちに|期限|urgent|immediately|now|suspend|deadline)", input.steps[pii].args.text)
-  input.steps[post].tool == "http_post"
-  not url_allowlisted(input.steps[post].args.url)
+over_budget {
+  data.risk_budget
+  rb := data.risk_budget
+  risk_score >= rb
 }

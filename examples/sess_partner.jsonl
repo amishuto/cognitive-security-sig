@@ -1,0 +1,7 @@
+{
+  "steps": [
+    { "tool": "web_search", "args": { "query": "hello" } },
+    { "tool": "http_get",   "args": { "url": "https://partner.example/page" } },
+    { "tool": "http_post",  "args": { "url": "https://partner.example/submit", "data_class": "HIGH" } }
+  ]
+}

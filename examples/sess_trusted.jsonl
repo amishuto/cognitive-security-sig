@@ -1,0 +1,5 @@
+{
+  "steps": [
+    { "tool": "http_post", "args": { "url": "https://api.yourcorp.jp/ingest", "data_class": "LOW" } }
+  ]
+}

