@@ -1,0 +1,6 @@
+{"session_id":"repetition1","steps":[
+  {"t":1,"tool":"web_search","args":{"q":"最新の暗号資産投資法"}},
+  {"t":2,"tool":"web_search","args":{"q":"最新の暗号資産投資法"}},
+  {"t":3,"tool":"web_search","args":{"q":"最新の暗号資産投資法"}},
+  {"t":4,"tool":"http_get","args":{"url":"https://crypto.example/advice"}}
+]}

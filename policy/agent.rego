@@ -64,3 +64,14 @@ warn contains {
   not url_allowlisted(input.steps[i].args.url)
   regex.match("(?i)://[^/]*(support|help|secure|verify|account|login|gov|official|customer|care)", input.steps[i].args.url)
 }
+
+# 6) Repetition effect（短時間に繰り返し検索）
+warn contains {
+  {"rule":"repetition_effect",
+   "reason":"multiple repeated web_search",
+   "count": n,
+   "refs":["Cognitive Biases: Repetition Effect","Human Factors in Security"]}
+} if {
+  n := count({ i | input.steps[i].tool == "web_search" })
+  n >= 3
+}
