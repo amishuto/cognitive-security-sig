@@ -1,0 +1,344 @@
+package agent
+
+########################
+# ゾーン判定（関数なし） #
+########################
+
+zt_zone_trusted(u) {
+  p := data.policy.destinations.TRUSTED[_]
+  startswith(u, p)
+}
+zt_zone_partner(u) {
+  p := data.policy.destinations.PARTNER[_]
+  startswith(u, p)
+}
+
+# ゾーン値 z を与える（単一の関数で条件分岐）
+zt_zone(u, z) {
+  zt_zone_trusted(u)
+  z = "TRUSTED"
+}
+zt_zone(u, z) {
+  not zt_zone_trusted(u)
+  zt_zone_partner(u)
+  z = "PARTNER"
+}
+zt_zone(u, z) {
+  not zt_zone_trusted(u)
+  not zt_zone_partner(u)
+  z = "UNKNOWN"
+}
+
+########################
+# データ機密度（代入）  #
+########################
+
+data_class(s, dc) {
+  s.args.data_class
+  dc = s.args.data_class
+}
+data_class(s, dc) {
+  not s.args.data_class
+  dc = "LOW"
+}
+
+############################
+# 認知WARNの扱い（安全版） #
+############################
+
+# warn が存在するか（未定義ケースに対応）
+warn_defined { data.agent.policy.warn }
+
+# i 番ステップに関係するか（ORはブロック分割）
+related_to_step(i, w) {
+  w.step == i
+}
+related_to_step(i, w) {
+  w.to == i
+}
+related_to_step(i, w) {
+  w.from == i
+}
+
+# high WARN が 1件以上あるか（内包で完全束縛）
+is_risky(i) {
+  warn_defined
+  count([1 |
+    w := data.agent.policy.warn[_];
+    related_to_step(i, w);
+    lower(w.severity) == "high"
+  ]) > 0
+}
+
+########################
+# ZTA Gate 決定ロジック #
+########################
+
+# 決定規則
+gate("TRUSTED", "LOW", false, "ALLOW")
+gate("TRUSTED", _,     true,  "CONFIRM")
+gate("PARTNER", "LOW", false, "CONFIRM")
+gate("PARTNER", _,     _,     "CONFIRM")
+gate("UNKNOWN", _,     _,     "BLOCK")
+
+# 各 http_post ステップに対し ALLOW/CONFIRM/BLOCK を返す
+gate_decisions[res] {
+  some i
+  s := input.steps[i]
+  s.tool == "http_post"
+
+  url := s.args.url
+  
+  # ゾーン判定
+  zt_zone_trusted(url)
+  z = "TRUSTED"
+  
+  # データ機密度判定
+  s.args.data_class
+  dc = s.args.data_class
+  r := is_risky(i)
+  
+  # ゲート決定
+  dc = "LOW"
+  not r
+  decision = "ALLOW"
+  res := {
+    "step": i,
+    "zone": z,
+    "data_class": dc,
+    "risky": r,
+    "gate": decision
+  }
+}
+
+gate_decisions[res] {
+  some i
+  s := input.steps[i]
+  s.tool == "http_post"
+
+  url := s.args.url
+  
+  # ゾーン判定
+  zt_zone_trusted(url)
+  z = "TRUSTED"
+  
+  # データ機密度判定
+  s.args.data_class
+  dc = s.args.data_class
+  r := is_risky(i)
+  
+  # ゲート決定
+  r
+  decision = "CONFIRM"
+  res := {
+    "step": i,
+    "zone": z,
+    "data_class": dc,
+    "risky": r,
+    "gate": decision
+  }
+}
+
+gate_decisions[res] {
+  some i
+  s := input.steps[i]
+  s.tool == "http_post"
+
+  url := s.args.url
+  
+  # ゾーン判定
+  zt_zone_trusted(url)
+  z = "TRUSTED"
+  
+  # データ機密度判定
+  s.args.data_class
+  dc = s.args.data_class
+  r := is_risky(i)
+  
+  # ゲート決定
+  dc != "LOW"
+  decision = "CONFIRM"
+  res := {
+    "step": i,
+    "zone": z,
+    "data_class": dc,
+    "risky": r,
+    "gate": decision
+  }
+}
+
+gate_decisions[res] {
+  some i
+  s := input.steps[i]
+  s.tool == "http_post"
+
+  url := s.args.url
+  
+  # ゾーン判定
+  not zt_zone_trusted(url)
+  zt_zone_partner(url)
+  z = "PARTNER"
+  
+  # データ機密度判定
+  s.args.data_class
+  dc = s.args.data_class
+  r := is_risky(i)
+  
+  # ゲート決定
+  dc = "LOW"
+  not r
+  decision = "CONFIRM"
+  res := {
+    "step": i,
+    "zone": z,
+    "data_class": dc,
+    "risky": r,
+    "gate": decision
+  }
+}
+
+gate_decisions[res] {
+  some i
+  s := input.steps[i]
+  s.tool == "http_post"
+
+  url := s.args.url
+  
+  # ゾーン判定
+  not zt_zone_trusted(url)
+  zt_zone_partner(url)
+  z = "PARTNER"
+  
+  # データ機密度判定
+  s.args.data_class
+  dc = s.args.data_class
+  r := is_risky(i)
+  
+  # ゲート決定
+  dc != "LOW"
+  decision = "CONFIRM"
+  res := {
+    "step": i,
+    "zone": z,
+    "data_class": dc,
+    "risky": r,
+    "gate": decision
+  }
+}
+
+gate_decisions[res] {
+  some i
+  s := input.steps[i]
+  s.tool == "http_post"
+
+  url := s.args.url
+  
+  # ゾーン判定
+  not zt_zone_trusted(url)
+  zt_zone_partner(url)
+  z = "PARTNER"
+  
+  # データ機密度判定
+  s.args.data_class
+  dc = s.args.data_class
+  r := is_risky(i)
+  
+  # ゲート決定
+  r
+  decision = "CONFIRM"
+  res := {
+    "step": i,
+    "zone": z,
+    "data_class": dc,
+    "risky": r,
+    "gate": decision
+  }
+}
+
+gate_decisions[res] {
+  some i
+  s := input.steps[i]
+  s.tool == "http_post"
+
+  url := s.args.url
+  
+  # ゾーン判定
+  not zt_zone_trusted(url)
+  not zt_zone_partner(url)
+  z = "UNKNOWN"
+  
+  # データ機密度判定
+  s.args.data_class
+  dc = s.args.data_class
+  r := is_risky(i)
+  
+  # ゲート決定
+  decision = "BLOCK"
+  res := {
+    "step": i,
+    "zone": z,
+    "data_class": dc,
+    "risky": r,
+    "gate": decision
+  }
+}
+
+gate_decisions[res] {
+  some i
+  s := input.steps[i]
+  s.tool == "http_post"
+
+  url := s.args.url
+  
+  # ゾーン判定
+  not zt_zone_trusted(url)
+  not zt_zone_partner(url)
+  z = "UNKNOWN"
+  
+  # データ機密度判定
+  not s.args.data_class
+  dc = "LOW"
+  r := is_risky(i)
+  
+  # ゲート決定
+  decision = "BLOCK"
+  res := {
+    "step": i,
+    "zone": z,
+    "data_class": dc,
+    "risky": r,
+    "gate": decision
+  }
+}
+
+###################
+# 累積リスク予算  #
+###################
+
+# severity→点数（衝突回避のため定数マップ風に分離）
+sev_to_score("high", 3)
+sev_to_score("medium", 2)
+sev_to_score("low", 1)
+sev_to_score(_, 0)
+
+risk_score := sum([score |
+  warn_defined;
+  w := data.agent.policy.warn[_];
+  lower(w.severity) == "high";
+  score = 3
+]) + sum([score |
+  warn_defined;
+  w := data.agent.policy.warn[_];
+  lower(w.severity) == "medium";
+  score = 2
+]) + sum([score |
+  warn_defined;
+  w := data.agent.policy.warn[_];
+  lower(w.severity) == "low";
+  score = 1
+])
+
+over_budget {
+  rb := data.policy.risk_budget
+  risk_score >= rb
+}

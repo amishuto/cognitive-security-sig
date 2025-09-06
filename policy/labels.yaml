@@ -4,9 +4,19 @@ labels:
   PII_SENSITIVE: { pii: true,  fields: ["address","id","bank"] }
 
 destinations:
-  TRUSTED:  ["https://*.yourcorp.jp", "https://api.payment.example"]
-  INTERNAL: ["https://*.intra.local"]
-  UNKNOWN:  ["*"]
+  TRUSTED:
+  　- "https://*.yourcorp.jp",
+    - "https://api.payment.example"
+    - "https://www.yourcorp.jp"
+    - "https://api.yourcorp.jp"
+  INTERNAL: 
+    - "https://*.intra.local"
+  PARTNER:
+    - "https://partner.example/"
+  UNKNOWN:  
+    - "*"
 
 network:
   require_tls: true
+
+risk_budget: 7

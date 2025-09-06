@@ -1,0 +1,8 @@
+policy:
+  destinations:
+    TRUSTED:
+      - "https://www.yourcorp.jp"
+      - "https://api.yourcorp.jp"
+    PARTNER:
+      - "https://partner.example"
+  risk_budget: 7
