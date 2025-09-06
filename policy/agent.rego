@@ -75,3 +75,24 @@ warn contains {
   n := count({ i | input.steps[i].tool == "web_search" })
   n >= 3
 }
+
+# 7) Urgency framing（心理的圧迫ワード → 直後に外部送信）
+warn contains {
+  {"rule":"urgency_framing",
+   "from": pii,
+   "to": post,
+   "reason":"urgency cue followed by external send",
+   "refs":["Social Engineering: Urgency","Cialdini: Influence"],
+   "cue": "urgency"}
+} if {
+  some pii, post
+  input.steps[pii].tool == "extract_pii"
+  post > pii
+
+  # 緊急性キーワード（日本語・英語）
+  regex.match("(?i)(至急|緊急|今すぐ|アカウント停止|直ちに|期限|urgent|immediately|now|suspend|deadline)", input.steps[pii].args.text)
+
+  # 直後の送信系アクション（許可外）
+  input.steps[post].tool == "http_post"
+  not url_allowlisted(input.steps[post].args.url)
+}
