@@ -1,0 +1,12 @@
+labels:
+  PUBLIC:        { pii: false }
+  PII_BASIC:     { pii: true,  fields: ["name","email","phone"] }
+  PII_SENSITIVE: { pii: true,  fields: ["address","id","bank"] }
+
+destinations:
+  TRUSTED:  ["https://*.yourcorp.jp", "https://api.payment.example"]
+  INTERNAL: ["https://*.intra.local"]
+  UNKNOWN:  ["*"]
+
+network:
+  require_tls: true
