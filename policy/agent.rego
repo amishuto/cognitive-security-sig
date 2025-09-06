@@ -38,3 +38,29 @@ warn contains {"rule":"excessive_chain_length","reason":"long action chain","len
   n := count(input.steps)
   n > 6
 }
+
+# 5-A) Authority-like domain（GET）
+warn contains {
+  {"rule":"authority_like_domain",
+   "step": i,
+   "reason":"authority-like domain pattern",
+   "refs":["Deception Heuristics","MITRE: Social Engineering"],
+   "url": input.steps[i].args.url}
+} if {
+  input.steps[i].tool == "http_get"
+  not url_allowlisted(input.steps[i].args.url)
+  regex.match("(?i)://[^/]*(support|help|secure|verify|account|login|gov|official|customer|care)", input.steps[i].args.url)
+}
+
+# 5-B) Authority-like domain（POST）
+warn contains {
+  {"rule":"authority_like_domain",
+   "step": i,
+   "reason":"authority-like domain pattern",
+   "refs":["Deception Heuristics","MITRE: Social Engineering"],
+   "url": input.steps[i].args.url}
+} if {
+  input.steps[i].tool == "http_post"
+  not url_allowlisted(input.steps[i].args.url)
+  regex.match("(?i)://[^/]*(support|help|secure|verify|account|login|gov|official|customer|care)", input.steps[i].args.url)
+}
