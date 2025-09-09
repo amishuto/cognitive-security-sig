@@ -5,7 +5,7 @@ labels:
 
 destinations:
   TRUSTED:
-  　- "https://*.yourcorp.jp",
+    - "https://*.yourcorp.jp"
     - "https://api.payment.example"
     - "https://www.yourcorp.jp"
     - "https://api.yourcorp.jp"
