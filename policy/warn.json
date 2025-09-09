@@ -1,0 +1,14 @@
+{
+  "agent": {
+    "policy": {
+      "warn": [
+        {
+          "step": 1,
+          "severity": "high",
+          "tag": "authority_pressure",
+          "note": "Partner POST issued under urgent/authority cue (demo)"
+        }
+      ]
+    }
+  }
+}
