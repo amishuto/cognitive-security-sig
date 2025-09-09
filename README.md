@@ -1,3 +1,4 @@
+[![OPA Policy CI](https://github.com/amishuto/cognitive-security-sig/actions/workflows/opa-ci.yml/badge.svg)](https://github.com/amishuto/cognitive-security-sig/actions/workflows/opa-ci.yml)
 # Cognitive Security SIG
 
 ## 問い
