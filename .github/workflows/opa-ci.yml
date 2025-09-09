@@ -1,0 +1,28 @@
+name: OPA Policy CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  opa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Install OPA
+        run: |
+          curl -L -o /usr/local/bin/opa https://openpolicyagent.org/downloads/v0.64.0/opa_linux_amd64
+          chmod +x /usr/local/bin/opa
+          opa version
+
+      - name: Run CI assertions
+        env:
+          OPA_BIN: /usr/local/bin/opa
+        run: |
+          bash scripts/ci.sh
