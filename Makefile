@@ -1,14 +1,15 @@
-OPA_BIN ?= ./opa064
+OPA=./opa064
 
-.PHONY: fmt check demo test
 fmt:
-	$(OPA_BIN) fmt -w policy/agent.rego
+	$(OPA) fmt -w policy/*.rego
+
+fmtcheck:
+	$(OPA) fmt --fail policy/*.rego
 
 check:
-	$(OPA_BIN) check policy/agent.rego
-
-demo: fmt check
-	./scripts/demo.sh
+	$(OPA) check policy/*.rego
 
 test:
-	OPA_BIN=$(OPA_BIN) ./scripts/ci.sh
+	$(OPA) test -v policy
+
+.PHONY: fmt fmtcheck check test
