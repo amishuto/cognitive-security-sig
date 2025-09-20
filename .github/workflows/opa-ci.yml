@@ -1,55 +1,19 @@
-name: OPA Policy CI
-
+name: OPA CI
 on:
   push:
   pull_request:
-
 jobs:
   opa:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup OPA
-        uses: open-policy-agent/setup-opa@v2
-        with:
-          version: latest
-
-      - name: Rego fmt (check only)
+      - uses: actions/checkout@v4
+      - name: Install OPA
         run: |
-          opa fmt -c policy/*.rego
-
-      - name: Rego compile check
-        run: |
-          opa check policy/*.rego
-
-      - name: Run eval (PARTNER -> CONFIRM)
-        run: |
-          opa eval -f pretty \
-            -i examples/sess_partner.jsonl \
-            -d policy/agent.rego -d policy/labels.yaml \
-            'data.agent.gate_decisions' > /dev/null
-
-      - name: Run eval (UNKNOWN -> BLOCK)
-        run: |
-          opa eval -f pretty \
-            -i examples/sess_unknown.jsonl \
-            -d policy/agent.rego -d policy/labels.yaml \
-            'data.agent.gate_decisions' > /dev/null
-
-      - name: Run eval (TRUSTED -> ALLOW)
-        run: |
-          opa eval -f pretty \
-            -i examples/sess_trusted.jsonl \
-            -d policy/agent.rego -d policy/labels.yaml \
-            'data.agent.gate_decisions' > /dev/null
-
-      - name: Run eval (PARTNER + WARN -> CONFIRM)
-        run: |
-          opa eval -f pretty \
-            -i examples/sess_partner_warn.jsonl \
-            -d policy/agent.rego -d policy/labels.yaml -d policy/warn.json \
-            'data.agent.gate_decisions' > /dev/null
+          curl -L -o opa https://openpolicyagent.org/downloads/v0.64.0/opa_linux_amd64_static
+          chmod +x opa && sudo mv opa /usr/local/bin/opa
+      - name: Format check
+        run: opa fmt --fail policy/*.rego
+      - name: Static check
+        run: opa check policy/*.rego
+      - name: Unit tests
+        run: opa test -v policy
