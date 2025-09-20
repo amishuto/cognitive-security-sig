@@ -206,3 +206,9 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 /cognitive-security-sig
+
+# local backups
+policy/*.bak*
+
+# local tools
+opa064
