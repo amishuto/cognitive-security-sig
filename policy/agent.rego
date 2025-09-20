@@ -1,22 +1,18 @@
 package agent
 
-# ===== Zone match (safe) =====
+# ===== Zone match (safe; prefix-only) =====
 zt_zone_trusted(u) {
-	count([1 |
-		data.destinations
-		data.destinations.TRUSTED
-		p := data.destinations.TRUSTED[_]
-		startswith(u, p)
-	]) > 0
+	data.destinations
+	data.destinations.TRUSTED
+	p := data.destinations.TRUSTED[_]
+	startswith(u, p)
 }
 
 zt_zone_partner(u) {
-	count([1 |
-		data.destinations
-		data.destinations.PARTNER
-		p := data.destinations.PARTNER[_]
-		startswith(u, p)
-	]) > 0
+	data.destinations
+	data.destinations.PARTNER
+	p := data.destinations.PARTNER[_]
+	startswith(u, p)
 }
 
 zone(u) = z {
@@ -35,9 +31,7 @@ zone(u) = z {
 # ===== Data class (fallback) =====
 data_class(s) = dc {
 	dc := s.args.data_class
-}
-
-else = "LOW" {
+} else = "LOW" {
 	not s.args.data_class
 }
 
@@ -87,7 +81,7 @@ else = false {
 	not is_risky(i)
 }
 
-# single rule
+# single rule: one decision per http_post step
 gate_decisions[res] {
 	some i
 	s := input.steps[i]
@@ -103,14 +97,11 @@ gate_decisions[res] {
 }
 
 # ===== Risk budget (safe, minimal) =====
-
-# severity → score
 sev_to_score(s) = n {
 	ls := lower(s)
 	n := {"high": 3, "medium": 2, "low": 1}[ls]
 } else = 0
 
-# sum scores of all WARNs (0 if none)
 risk_score = sum([sev_to_score(w.severity) |
 	warn_defined
 	w := data.agent.policy.warn[_]
@@ -122,50 +113,16 @@ over_budget {
 	risk_score >= rb
 }
 
-# decision helper (functional)
+# decision function (total)
 gate_decision(z, dc, r) = "ALLOW" {
 	z == "TRUSTED"
 	dc == "LOW"
 	r == false
-}
-
-else = "CONFIRM" {
+} else = "CONFIRM" {
 	z == "TRUSTED"
 	r == true
-}
-
-else = "CONFIRM" {
+} else = "CONFIRM" {
 	z == "PARTNER"
-}
-
-else = "BLOCK" {
+} else = "BLOCK" {
 	z == "UNKNOWN"
 }
-
-########## Optional: wildcard URL match ##########
-# パターン例: "https://*.yourcorp.jp" に対して re_match で評価
-url_matches(u, pat) {
-	# ドットをエスケープ、* を .*, 先頭末尾にアンカー
-	esc := replace(pat, ".", "\\.")
-	rx := replace(concat("", ["^", esc, "$"]), "\\*", ".*")
-	re_match(rx, u)
-}
-
-# 既存 zt_zone_* に“もう1本”ルールを足す（ORで評価される）
-zt_zone_trusted(u) {
-	data.destinations
-	data.destinations.TRUSTED
-
-	p := data.destinations.TRUSTED[_]
-	url_matches(u, p)
-}
-
-zt_zone_partner(u) {
-	data.destinations
-	data.destinations.PARTNER
-
-	p := data.destinations.PARTNER[_]
-	url_matches(u, p)
-}
-
-########## End wildcard ##########
