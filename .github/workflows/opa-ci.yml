@@ -1,7 +1,10 @@
 name: OPA CI
+
 on:
-  push: { branches: [ main ] }
-  pull_request: { branches: [ main ] }
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   opa:
@@ -9,18 +12,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # OPA v0.64.0 を取得
-      - name: Install OPA 0.64.0
+      - name: Install OPA
         run: |
-          curl -L -o opa https://openpolicyagent.org/downloads/v0.64.0/opa_linux_amd64_static
+          set -euo pipefail
+          rm -f opa opa064
+          curl -fsSL -o opa https://openpolicyagent.org/downloads/v0.64.0/opa_linux_amd64_static
           chmod +x opa
-          sudo mv opa /usr/local/bin/opa
+          ./opa version
+          ln -sf ./opa opa064 || true
 
-      - name: Format (fail on diff)
-        run: opa fmt --fail policy/*.rego
+      - name: fmt check
+        run: ./opa064 fmt --fail policy/*.rego
 
-      - name: Static check
-        run: opa check policy/*.rego
+      - name: static check
+        run: ./opa064 check policy/*.rego
 
-      - name: Unit tests (rego)
-        run: opa test -v policy
+      - name: test
+        run: ./opa064 test -v policy
+
+      - name: smoke (optional)
+        if: hashFiles('scripts/opa-smoke.sh') != ''
+        run: bash scripts/opa-smoke.sh
