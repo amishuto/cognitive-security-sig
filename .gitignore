@@ -212,3 +212,7 @@ policy/*.bak*
 
 # local tools
 opa064
+# local binaries / artifacts
+opa064
+*.DS_Store
+artifacts/

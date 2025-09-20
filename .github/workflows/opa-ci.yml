@@ -1,8 +1,7 @@
 name: OPA CI
-
 on:
-  push:
-  pull_request:
+  push: { branches: [ main ] }
+  pull_request: { branches: [ main ] }
 
 jobs:
   opa:
@@ -10,19 +9,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # OPA v0.64.0 をLinux用に取得（Makefileは ./opa064 を参照）
-      - name: Install OPA
+      # OPA v0.64.0 を取得
+      - name: Install OPA 0.64.0
         run: |
           curl -L -o opa https://openpolicyagent.org/downloads/v0.64.0/opa_linux_amd64_static
           chmod +x opa
-          ./opa version
-          ln -s ./opa opa064
+          sudo mv opa /usr/local/bin/opa
 
-      - name: fmt check
-        run: make fmtcheck
+      - name: Format (fail on diff)
+        run: opa fmt --fail policy/*.rego
 
-      - name: static check
-        run: make check
+      - name: Static check
+        run: opa check policy/*.rego
 
-      - name: test
-        run: make test
+      - name: Unit tests (rego)
+        run: opa test -v policy
