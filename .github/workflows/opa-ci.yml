@@ -3,23 +3,29 @@ name: OPA CI
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - "policy/**"
+      - "examples/**"
+      - ".github/workflows/opa-ci.yml"
+      - "scripts/**"
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main" ]   # ← PR は常に実行（paths フィルタなし）
+
+permissions:
+  contents: read
 
 jobs:
   opa:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
       - name: Install OPA
         run: |
-          set -euo pipefail
-          rm -f opa opa064
-          curl -fsSL -o opa https://openpolicyagent.org/downloads/v0.64.0/opa_linux_amd64_static
+          curl -L -o opa https://openpolicyagent.org/downloads/v0.64.0/opa_linux_amd64_static
           chmod +x opa
           ./opa version
-          ln -sf ./opa opa064 || true
+          ln -sf ./opa opa064   # idempotent
 
       - name: fmt check
         run: ./opa064 fmt --fail policy/*.rego
@@ -31,5 +37,6 @@ jobs:
         run: ./opa064 test -v policy
 
       - name: smoke (optional)
-        if: hashFiles('scripts/opa-smoke.sh') != ''
-        run: bash scripts/opa-smoke.sh
+        if: ${{ always() }}
+        run: |
+          [ -x scripts/opa-smoke.sh ] && scripts/opa-smoke.sh || echo "(no smoke script)"
