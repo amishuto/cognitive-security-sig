@@ -1,0 +1,50 @@
+name: Pages: build report and publish
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'policy/**'
+      - 'examples/**'
+      - 'scripts/**'
+      - 'Makefile'
+      - '.github/workflows/pages-report.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish:
+    if: github.actor != 'github-actions[bot]'  # 自動コミットでのループ防止
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq & OPA
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+          curl -sL -o opa https://openpolicyagent.org/downloads/v0.64.0/opa_linux_amd64_static
+          chmod +x opa && mv opa ./opa064
+
+      - name: Generate report (json/csv/html)
+        run: |
+          make report
+          make csv
+          make html
+
+      - name: Publish to docs/
+        run: |
+          mkdir -p docs
+          cp artifacts/report/index.html docs/index.html
+          cp artifacts/report/summary_decisions.csv docs/summary_decisions.csv || true
+          touch docs/.nojekyll
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet -- docs; then
+            git add docs
+            git commit -m "docs(pages): auto-publish report [skip ci]"
+            git push
+          else
+            echo "No changes in docs/"
+          fi

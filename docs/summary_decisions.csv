@@ -1,0 +1,7 @@
+session,idx,step,zone,data_class,risky,gate,reason,risk_score,over_budget
+"sess_danger",0,3,"UNKNOWN","LOW",false,"BLOCK","zone=UNKNOWN data_class=LOW risky=false -> BLOCK",3,false
+"sess_partner",0,2,"PARTNER","HIGH",false,"CONFIRM","zone=PARTNER data_class=HIGH risky=false -> CONFIRM",3,false
+"sess_partner_warn",0,1,"PARTNER","LOW",true,"CONFIRM","zone=PARTNER data_class=LOW risky=true -> CONFIRM",3,false
+"sess_trusted",0,0,"TRUSTED","LOW",false,"ALLOW","zone=TRUSTED data_class=LOW risky=false -> ALLOW",3,false
+"sess_unknown",0,0,"UNKNOWN","LOW",false,"BLOCK","zone=UNKNOWN data_class=LOW risky=false -> BLOCK",3,false
+"sess_warn",0,3,"UNKNOWN","LOW",false,"BLOCK","zone=UNKNOWN data_class=LOW risky=false -> BLOCK",3,false
