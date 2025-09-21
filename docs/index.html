@@ -5,30 +5,31 @@
 body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px}
 h1{font-size:20px}
 table{border-collapse:collapse;width:100%}
-th,td{border:1px solid #ddd;padding:8px}
+th,td{border:1px solid #ddd;padding:8px;vertical-align:top}
 th{background:#f6f8fa;text-align:left}
 tbody tr:nth-child(even){background:#fafafa}
 small{color:#666}
+code{background:#f6f8fa;padding:2px 4px;border-radius:4px}
 </style>
 <h1>OPA Report <small>(decisions)</small></h1>
 <table>
   <thead>
     <tr>
       <th>session</th><th>idx</th><th>step</th><th>zone</th><th>data_class</th>
-      <th>risky</th><th>gate</th><th>risk_score</th><th>over_budget</th>
+      <th>risky</th><th>gate</th><th>reason</th><th>risk_score</th><th>over_budget</th>
     </tr>
   </thead>
   <tbody>
 
-<tr><td>sess_danger</td><td>0</td><td>3</td><td>UNKNOWN</td><td>LOW</td><td>false</td><td>BLOCK</td><td>3</td><td>false</td></tr>
+<tr><td>sess_danger</td><td>0</td><td>3</td><td>UNKNOWN</td><td>LOW</td><td>false</td><td>BLOCK</td><td>zone=UNKNOWN data_class=LOW risky=false -&gt; BLOCK</td><td>3</td><td>false</td></tr>
 
 
-<tr><td>sess_partner</td><td>0</td><td>2</td><td>PARTNER</td><td>HIGH</td><td>false</td><td>CONFIRM</td><td>3</td><td>false</td></tr>
-<tr><td>sess_partner_warn</td><td>0</td><td>1</td><td>PARTNER</td><td>LOW</td><td>true</td><td>CONFIRM</td><td>3</td><td>false</td></tr>
+<tr><td>sess_partner</td><td>0</td><td>2</td><td>PARTNER</td><td>HIGH</td><td>false</td><td>CONFIRM</td><td>zone=PARTNER data_class=HIGH risky=false -&gt; CONFIRM</td><td>3</td><td>false</td></tr>
+<tr><td>sess_partner_warn</td><td>0</td><td>1</td><td>PARTNER</td><td>LOW</td><td>true</td><td>CONFIRM</td><td>zone=PARTNER data_class=LOW risky=true -&gt; CONFIRM</td><td>3</td><td>false</td></tr>
 
-<tr><td>sess_trusted</td><td>0</td><td>0</td><td>TRUSTED</td><td>LOW</td><td>false</td><td>ALLOW</td><td>3</td><td>false</td></tr>
-<tr><td>sess_unknown</td><td>0</td><td>0</td><td>UNKNOWN</td><td>LOW</td><td>false</td><td>BLOCK</td><td>3</td><td>false</td></tr>
-<tr><td>sess_warn</td><td>0</td><td>3</td><td>UNKNOWN</td><td>LOW</td><td>false</td><td>BLOCK</td><td>3</td><td>false</td></tr>
+<tr><td>sess_trusted</td><td>0</td><td>0</td><td>TRUSTED</td><td>LOW</td><td>false</td><td>ALLOW</td><td>zone=TRUSTED data_class=LOW risky=false -&gt; ALLOW</td><td>3</td><td>false</td></tr>
+<tr><td>sess_unknown</td><td>0</td><td>0</td><td>UNKNOWN</td><td>LOW</td><td>false</td><td>BLOCK</td><td>zone=UNKNOWN data_class=LOW risky=false -&gt; BLOCK</td><td>3</td><td>false</td></tr>
+<tr><td>sess_warn</td><td>0</td><td>3</td><td>UNKNOWN</td><td>LOW</td><td>false</td><td>BLOCK</td><td>zone=UNKNOWN data_class=LOW risky=false -&gt; BLOCK</td><td>3</td><td>false</td></tr>
 
   </tbody>
 </table>
