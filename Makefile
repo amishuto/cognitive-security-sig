@@ -18,3 +18,11 @@ report:
 	./scripts/opa-report.sh
 
 .PHONY: report
+
+csv: report
+	./scripts/opa-report-csv.sh
+
+html: report
+	./scripts/opa-report-html.sh
+
+.PHONY: csv html
