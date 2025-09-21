@@ -1,3 +1,7 @@
+**Live report:** https://amishuto.github.io/cognitive-security-sig/
+
+**Live report:** https://amishuto.github.io/cognitive-security-sig/
+
 [![OPA CI](https://github.com/amishuto/cognitive-security-sig/actions/workflows/opa-ci.yml/badge.svg)](https://github.com/amishuto/cognitive-security-sig/actions/workflows/opa-ci.yml)
 
 [![OPA Policy CI](https://github.com/amishuto/cognitive-security-sig/actions/workflows/opa-ci.yml/badge.svg)](https://github.com/amishuto/cognitive-security-sig/actions/workflows/opa-ci.yml)
