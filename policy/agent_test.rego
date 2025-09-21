@@ -59,3 +59,16 @@ test_partner_warn_risky {
 	r.risky == true
 	r.gate == "CONFIRM"
 }
+
+test_summary_has_keys {
+	in := {"steps": [{"tool": "http_post", "args": {"url": "https://partner.example/submit", "data_class": "LOW"}}]}
+	warns := [{"step": 0, "severity": "HIGH"}]
+	s := agent.summary with input as in
+		with data.destinations as {"TRUSTED": ["https://www.yourcorp.jp", "https://api.yourcorp.jp"], "PARTNER": ["https://partner.example/"]}
+		with data.risk_budget as 7
+		with data.agent.policy.warn as warns
+	s.risk_score == 3
+	s.over_budget == false
+	count(s.decisions) == 1
+	count(s.explain) == 1
+}
