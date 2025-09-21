@@ -21,3 +21,12 @@ AIが人間の認知を代行する時代に、自律を侵さずにどうセキ
 
 
 <!-- PR dry-run: 2025-09-20T13:09:30Z -->
+
+## Quick Start
+
+```bash
+./opa064 fmt --fail policy/*.rego
+./opa064 check policy/*.rego
+./opa064 test  -v    policy
+./scripts/opa-smoke.sh
+```
