@@ -30,3 +30,5 @@ AIが人間の認知を代行する時代に、自律を侵さずにどうセキ
 ./opa064 test  -v    policy
 ./scripts/opa-smoke.sh
 ```
+
+<!-- protection verify: 2025-09-21T03:13:40Z -->
