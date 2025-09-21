@@ -126,3 +126,45 @@ gate_decision(z, dc, r) = "ALLOW" {
 } else = "BLOCK" {
 	z == "UNKNOWN"
 }
+
+# ---- Explainability helpers (non-invasive) ----
+# 与えた input.steps[i] について、判定に使った主要要素を1行で説明
+explain_step(i) = why {
+	s := input.steps[i]
+	s.tool == "http_post"
+	z := zone(s.args.url)
+	dc := data_class(s)
+	r := risky(i)
+	d := gate_decision(z, dc, r)
+	why := sprintf("zone=%s data_class=%s risky=%v -> %s", [z, dc, r, d])
+}
+
+# まとめ出力：各ステップの説明 + 現在のリスク予算状況を添付
+explain = [
+{
+	"step": i,
+	"why": explain_step(i),
+	"risk_score": risk_score,
+	"over_budget": over_budget_flag,
+} |
+	some i
+	input.steps[i].tool == "http_post"
+]
+
+# ---- helpers: boolean wrapper for over_budget ----
+over_budget_flag {
+	over_budget
+}
+
+else = false
+
+# ---- Stable summary (for CLI/UX) ----
+# decisions: 判定の配列（set→array化）
+# explain  : 各ステップの「なぜ」 + 現在のリスク情報
+# risk_*, budget: 集計
+summary := {
+	"decisions": [d | d := gate_decisions[_]],
+	"explain": explain,
+	"risk_score": risk_score,
+	"over_budget": over_budget_flag,
+}
