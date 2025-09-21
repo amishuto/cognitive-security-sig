@@ -32,3 +32,10 @@ AIが人間の認知を代行する時代に、自律を侵さずにどうセキ
 ```
 
 <!-- protection verify: 2025-09-21T03:13:40Z -->
+
+Run all examples & save JSON:
+
+```bash
+make report
+# => artifacts/report/*.summary.json
+```

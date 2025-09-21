@@ -13,3 +13,8 @@ test:
 	$(OPA) test -v policy
 
 .PHONY: fmt fmtcheck check test
+
+report:
+	./scripts/opa-report.sh
+
+.PHONY: report
