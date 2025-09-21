@@ -1,0 +1,37 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>OPA Report</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px}
+h1{font-size:20px}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #ddd;padding:8px}
+th{background:#f6f8fa;text-align:left}
+tbody tr:nth-child(even){background:#fafafa}
+small{color:#666}
+</style>
+<h1>OPA Report <small>(decisions)</small></h1>
+<table>
+  <thead>
+    <tr>
+      <th>session</th><th>idx</th><th>step</th><th>zone</th><th>data_class</th>
+      <th>risky</th><th>gate</th><th>risk_score</th><th>over_budget</th>
+    </tr>
+  </thead>
+  <tbody>
+
+<tr><td>sess_danger</td><td>0</td><td>3</td><td>UNKNOWN</td><td>LOW</td><td>false</td><td>BLOCK</td><td>3</td><td>false</td></tr>
+
+
+<tr><td>sess_partner</td><td>0</td><td>2</td><td>PARTNER</td><td>HIGH</td><td>false</td><td>CONFIRM</td><td>3</td><td>false</td></tr>
+<tr><td>sess_partner_warn</td><td>0</td><td>1</td><td>PARTNER</td><td>LOW</td><td>true</td><td>CONFIRM</td><td>3</td><td>false</td></tr>
+
+<tr><td>sess_trusted</td><td>0</td><td>0</td><td>TRUSTED</td><td>LOW</td><td>false</td><td>ALLOW</td><td>3</td><td>false</td></tr>
+<tr><td>sess_unknown</td><td>0</td><td>0</td><td>UNKNOWN</td><td>LOW</td><td>false</td><td>BLOCK</td><td>3</td><td>false</td></tr>
+<tr><td>sess_warn</td><td>0</td><td>3</td><td>UNKNOWN</td><td>LOW</td><td>false</td><td>BLOCK</td><td>3</td><td>false</td></tr>
+
+  </tbody>
+</table>
+<p>Source: <code>artifacts/report/*.summary.json</code></p>
+
+<!-- pages-kick: 2025-09-21T04:32:36Z -->
